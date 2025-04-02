@@ -48,7 +48,7 @@ export default function Home() {
       // Get current definition
       const { data: currentDef, error: fetchError } = await supabase
         .from('definitions')
-        .select(field)
+        .select('*')
         .eq('id', definitionId)
         .single()
 
@@ -57,10 +57,17 @@ export default function Home() {
         return
       }
 
+      if (!currentDef) {
+        console.error('Definition not found')
+        return
+      }
+
       // Update the vote count
       const { error: updateError } = await supabase
         .from('definitions')
-        .update({ [field]: (currentDef[field] || 0) + 1 })
+        .update({
+          [field]: ((currentDef as Definition)[field] || 0) + 1
+        })
         .eq('id', definitionId)
 
       if (updateError) {
