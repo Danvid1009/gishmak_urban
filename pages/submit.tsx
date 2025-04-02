@@ -15,23 +15,32 @@ export default function Submit() {
     setError(null)
 
     try {
+      console.log('Starting submission process...')
+      console.log('Word:', word)
+      console.log('Definition:', definition)
+
       // First check if the term already exists
+      console.log('Checking if term exists...')
       const { data: existingTerm, error: checkError } = await supabase
         .from('terms')
         .select('id')
         .eq('word', word.toLowerCase())
         .single()
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found"
-        console.error('Error checking existing term:', checkError)
-        throw new Error('Failed to check if term exists')
+      if (checkError) {
+        console.log('Check error:', checkError)
+        if (checkError.code !== 'PGRST116') { // PGRST116 is "not found"
+          throw new Error(`Failed to check if term exists: ${checkError.message}`)
+        }
       }
 
       let termId: string
       if (existingTerm) {
+        console.log('Term exists:', existingTerm)
         termId = existingTerm.id
       } else {
         // Insert new term
+        console.log('Creating new term...')
         const { data: newTerm, error: termError } = await supabase
           .from('terms')
           .insert([{ word: word.toLowerCase() }])
@@ -39,15 +48,17 @@ export default function Submit() {
           .single()
 
         if (termError) {
-          console.error('Error inserting term:', termError)
-          throw new Error('Failed to create term')
+          console.error('Term creation error:', termError)
+          throw new Error(`Failed to create term: ${termError.message}`)
         }
 
+        console.log('New term created:', newTerm)
         termId = newTerm.id
       }
 
       // Insert definition
-      const { error: defError } = await supabase
+      console.log('Creating definition...')
+      const { data: newDef, error: defError } = await supabase
         .from('definitions')
         .insert([
           {
@@ -57,15 +68,18 @@ export default function Submit() {
             downvotes: 0,
           },
         ])
+        .select()
+        .single()
 
       if (defError) {
-        console.error('Error inserting definition:', defError)
-        throw new Error('Failed to create definition')
+        console.error('Definition creation error:', defError)
+        throw new Error(`Failed to create definition: ${defError.message}`)
       }
 
+      console.log('Definition created:', newDef)
       router.push('/')
     } catch (error) {
-      console.error('Error submitting term:', error)
+      console.error('Submission error:', error)
       setError(error instanceof Error ? error.message : 'Error submitting term. Please try again.')
     } finally {
       setIsSubmitting(false)
