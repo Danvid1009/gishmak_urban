@@ -5,27 +5,39 @@ import Link from 'next/link'
 export default function Home() {
   const [terms, setTerms] = useState<(Term & { definitions: Definition[] })[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('Fetching terms...')
     fetchTerms()
   }, [])
 
   const fetchTerms = async () => {
-    const { data, error } = await supabase
-      .from('terms')
-      .select(`
-        *,
-        definitions (*)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(20)
+    try {
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('Starting terms fetch...')
+      
+      const { data, error } = await supabase
+        .from('terms')
+        .select(`
+          *,
+          definitions (*)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20)
 
-    if (error) {
-      console.error('Error fetching terms:', error)
-      return
+      if (error) {
+        console.error('Error fetching terms:', error)
+        setError(error.message)
+        return
+      }
+
+      console.log('Terms fetched successfully:', data)
+      setTerms(data || [])
+    } catch (err) {
+      console.error('Unexpected error:', err)
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     }
-
-    setTerms(data || [])
   }
 
   return (
@@ -33,6 +45,12 @@ export default function Home() {
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-center mb-8">Urban Dictionary Clone</h1>
         
+        {error && (
+          <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-100 text-red-700 rounded-lg">
+            Error: {error}
+          </div>
+        )}
+
         <div className="max-w-2xl mx-auto mb-8">
           <input
             type="text"

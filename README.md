@@ -62,6 +62,21 @@ A modern Urban Dictionary-style web application built with Next.js, Supabase, an
      downvotes integer default 0,
      created_at timestamp with time zone default timezone('utc'::text, now()) not null
    );
+
+   -- Set up Row Level Security (RLS)
+   alter table terms enable row level security;
+   alter table definitions enable row level security;
+
+   -- Create policies to allow all operations
+   create policy "Allow all operations on terms" on terms
+     for all
+     using (true)
+     with check (true);
+
+   create policy "Allow all operations on definitions" on definitions
+     for all
+     using (true)
+     with check (true);
    ```
 
 6. Run the development server:
@@ -84,4 +99,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+Last updated: 2024 
