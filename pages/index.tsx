@@ -83,7 +83,7 @@ export default function Home() {
                   <h2 className="text-2xl font-bold text-blue-900 hover:text-blue-700 hover:underline">{term.word}</h2>
                 </Link>
                 {term.definitions[0] && (
-                  <p className="mt-2 text-gray-700">{term.definitions[0].content}</p>
+                  <p className="mt-2 text-gray-700 whitespace-pre-line">{term.definitions[0].content}</p>
                 )}
                 <div className="mt-4 flex items-center text-sm text-gray-600">
                   <span>↑ {term.definitions[0]?.upvotes || 0}</span>
