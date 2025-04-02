@@ -47,7 +47,7 @@ export default function Home() {
       <div className="fixed inset-0 z-0">
         <Image
           src="/images/background.png"
-          alt="Background"
+          alt="Gishmak Dictionary Background"
           layout="fill"
           objectFit="cover"
           quality={100}
