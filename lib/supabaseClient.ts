@@ -9,15 +9,21 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
 }
 
 // Validate anon key format
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.startsWith('eyJ')) {
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.trim()
+if (!anonKey.startsWith('eyJ')) {
   throw new Error('Invalid Supabase anon key format. Key should start with "eyJ"')
+}
+
+// Validate anon key length (should be around 200-300 characters)
+if (anonKey.length < 100 || anonKey.length > 500) {
+  throw new Error('Invalid Supabase anon key length. Please check your key.')
 }
 
 console.log('Initializing Supabase client with URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  anonKey,
   {
     auth: {
       persistSession: false,
