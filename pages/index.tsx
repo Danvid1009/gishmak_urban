@@ -42,7 +42,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative bg-gradient-to-br from-blue-900 via-blue-600 to-blue-300">
       {/* Background Image */}
       <div className="fixed inset-0 z-0">
         <Image
