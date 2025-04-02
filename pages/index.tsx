@@ -41,6 +41,40 @@ export default function Home() {
     }
   }
 
+  const handleVote = async (definitionId: string, voteType: 'up' | 'down') => {
+    try {
+      const field = voteType === 'up' ? 'upvotes' : 'downvotes'
+      
+      // Get current definition
+      const { data: currentDef, error: fetchError } = await supabase
+        .from('definitions')
+        .select(field)
+        .eq('id', definitionId)
+        .single()
+
+      if (fetchError) {
+        console.error('Error fetching current votes:', fetchError)
+        return
+      }
+
+      // Update the vote count
+      const { error: updateError } = await supabase
+        .from('definitions')
+        .update({ [field]: (currentDef[field] || 0) + 1 })
+        .eq('id', definitionId)
+
+      if (updateError) {
+        console.error('Error updating votes:', updateError)
+        return
+      }
+
+      // Refresh the terms to show updated vote count
+      fetchTerms()
+    } catch (err) {
+      console.error('Error voting:', err)
+    }
+  }
+
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-blue-900 via-blue-600 to-blue-300">
       {/* Background Image */}
@@ -83,13 +117,27 @@ export default function Home() {
                   <h2 className="text-2xl font-bold text-blue-900 hover:text-blue-700 hover:underline">{term.word}</h2>
                 </Link>
                 {term.definitions[0] && (
-                  <p className="mt-2 text-gray-700 whitespace-pre-line">{term.definitions[0].content}</p>
+                  <>
+                    <p className="mt-2 text-gray-700 whitespace-pre-line">{term.definitions[0].content}</p>
+                    <div className="mt-4 flex items-center text-sm text-gray-600">
+                      <button 
+                        onClick={() => handleVote(term.definitions[0].id, 'up')}
+                        className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
+                      >
+                        <span className="text-lg">↑</span>
+                        <span>{term.definitions[0].upvotes || 0}</span>
+                      </button>
+                      <button 
+                        onClick={() => handleVote(term.definitions[0].id, 'down')}
+                        className="flex items-center space-x-1 ml-4 hover:text-red-600 transition-colors"
+                      >
+                        <span className="text-lg">↓</span>
+                        <span>{term.definitions[0].downvotes || 0}</span>
+                      </button>
+                      <span className="ml-4">• {new Date(term.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </>
                 )}
-                <div className="mt-4 flex items-center text-sm text-gray-600">
-                  <span>↑ {term.definitions[0]?.upvotes || 0}</span>
-                  <span className="mx-2">↓ {term.definitions[0]?.downvotes || 0}</span>
-                  <span>• {new Date(term.created_at).toLocaleDateString()}</span>
-                </div>
               </div>
             ))}
           </div>
