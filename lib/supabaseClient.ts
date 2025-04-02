@@ -1,0 +1,22 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+export type Term = {
+  id: string
+  word: string
+  created_at: string
+}
+
+export type Definition = {
+  id: string
+  term_id: string
+  user_id: string | null
+  content: string
+  upvotes: number
+  downvotes: number
+  created_at: string
+} 
