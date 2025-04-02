@@ -31,8 +31,9 @@ export const supabase = createClient(
 )
 
 // Test the connection
-supabase.from('terms').select('count').limit(1)
-  .then(({ data, error }) => {
+void (async () => {
+  try {
+    const { data, error } = await supabase.from('terms').select('count').limit(1)
     if (error) {
       console.error('Supabase connection test failed:', error)
       if (error.code === '401') {
@@ -41,10 +42,10 @@ supabase.from('terms').select('count').limit(1)
     } else {
       console.log('Supabase connection test successful')
     }
-  })
-  .catch(err => {
+  } catch (err) {
     console.error('Unexpected error during Supabase connection test:', err)
-  })
+  }
+})()
 
 export interface Term {
   id: string
