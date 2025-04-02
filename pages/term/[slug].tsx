@@ -35,10 +35,14 @@ export default function TermPage() {
   }
 
   const handleVote = async (definitionId: string, type: 'up' | 'down') => {
+    if (!term?.definitions[0]) return
+
+    const currentVotes = term.definitions[0][type === 'up' ? 'upvotes' : 'downvotes']
+    
     const { error } = await supabase
       .from('definitions')
       .update({
-        [type === 'up' ? 'upvotes' : 'downvotes']: term?.definitions[0][type === 'up' ? 'upvotes' : 'downvotes'] + 1,
+        [type === 'up' ? 'upvotes' : 'downvotes']: currentVotes + 1,
       })
       .eq('id', definitionId)
 
