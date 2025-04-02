@@ -30,23 +30,6 @@ export const supabase = createClient(
   }
 )
 
-// Test the connection
-void (async () => {
-  try {
-    const { data, error } = await supabase.from('terms').select('count').limit(1)
-    if (error) {
-      console.error('Supabase connection test failed:', error)
-      if (error.code === '401') {
-        console.error('Authentication failed. Please check your anon key.')
-      }
-    } else {
-      console.log('Supabase connection test successful')
-    }
-  } catch (err) {
-    console.error('Unexpected error during Supabase connection test:', err)
-  }
-})()
-
 export interface Term {
   id: string
   word: string
