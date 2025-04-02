@@ -150,14 +150,23 @@ export default function TermPage() {
                           className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
                         >
                           <span className="text-lg">↑</span>
-                          <span>{def.upvotes || 0}</span>
                         </button>
+                        <span className={`mx-2 ${
+                          def.upvotes - def.downvotes > 0 
+                            ? 'text-blue-600' 
+                            : def.upvotes - def.downvotes < 0 
+                              ? 'text-red-600' 
+                              : ''
+                        }`}>
+                          {def.upvotes - def.downvotes > 0
+                            ? `+${def.upvotes - def.downvotes}`
+                            : def.upvotes - def.downvotes}
+                        </span>
                         <button 
                           onClick={() => handleVote(def.id, 'down')}
-                          className="flex items-center space-x-1 ml-4 hover:text-red-600 transition-colors"
+                          className="flex items-center space-x-1 hover:text-red-600 transition-colors"
                         >
                           <span className="text-lg">↓</span>
-                          <span>{def.downvotes || 0}</span>
                         </button>
                         <span className="ml-4">• {new Date(def.created_at).toLocaleDateString()}</span>
                       </div>

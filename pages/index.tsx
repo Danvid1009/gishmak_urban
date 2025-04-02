@@ -132,14 +132,23 @@ export default function Home() {
                         className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
                       >
                         <span className="text-lg">↑</span>
-                        <span>{term.definitions[0].upvotes || 0}</span>
                       </button>
+                      <span className={`mx-2 ${
+                        term.definitions[0].upvotes - term.definitions[0].downvotes > 0 
+                          ? 'text-blue-600' 
+                          : term.definitions[0].upvotes - term.definitions[0].downvotes < 0 
+                            ? 'text-red-600' 
+                            : ''
+                      }`}>
+                        {term.definitions[0].upvotes - term.definitions[0].downvotes > 0
+                          ? `+${term.definitions[0].upvotes - term.definitions[0].downvotes}`
+                          : term.definitions[0].upvotes - term.definitions[0].downvotes}
+                      </span>
                       <button 
                         onClick={() => handleVote(term.definitions[0].id, 'down')}
-                        className="flex items-center space-x-1 ml-4 hover:text-red-600 transition-colors"
+                        className="flex items-center space-x-1 hover:text-red-600 transition-colors"
                       >
                         <span className="text-lg">↓</span>
-                        <span>{term.definitions[0].downvotes || 0}</span>
                       </button>
                       <span className="ml-4">• {new Date(term.created_at).toLocaleDateString()}</span>
                     </div>
