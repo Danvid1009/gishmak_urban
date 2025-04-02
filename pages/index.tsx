@@ -120,7 +120,7 @@ export default function Home() {
           <div className="grid gap-6">
             {terms.map((term) => (
               <div key={term.id} className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 transition-all hover:bg-white">
-                <Link href={`/term/${term.word}`}>
+                <Link href={`/term/${encodeURIComponent(term.word)}`}>
                   <h2 className="text-2xl font-bold text-blue-900 hover:text-blue-700 hover:underline">{term.word}</h2>
                 </Link>
                 {term.definitions[0] && (
