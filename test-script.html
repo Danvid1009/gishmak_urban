@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Google Apps Script</title>
+</head>
+<body>
+    <h1>Test Google Apps Script Connection</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvxQzwYF0iF-8Ebj4lSYAspCNRjzzlbl1KaAUKgEHi3ykTMF80zWBTk6Mvka9q8As/exec';
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                console.log('Fetching:', `${GOOGLE_SCRIPT_URL}?action=read`);
+                
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=read&t=${Date.now()}`, {
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                console.log('Response headers:', response.headers);
+                
+                const text = await response.text();
+                console.log('Response text:', text);
+                
+                if (text.includes('Access Denied') || text.includes('<!DOCTYPE')) {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: red;">Error: Access Denied</h3>
+                        <p>The Google Apps Script is not accessible. You need to:</p>
+                        <ol>
+                            <li>Open your Google Apps Script project</li>
+                            <li>Click "Deploy" > "Manage deployments"</li>
+                            <li>Click the edit (pencil) icon</li>
+                            <li>Set "Who has access" to <strong>"Anyone"</strong></li>
+                            <li>Click "Deploy" to create a new version</li>
+                            <li>Copy the new URL</li>
+                        </ol>
+                        <p><strong>Response:</strong></p>
+                        <pre>${text.substring(0, 500)}</pre>
+                    `;
+                } else {
+                    try {
+                        const data = JSON.parse(text);
+                        resultDiv.innerHTML = `
+                            <h3 style="color: green;">Success!</h3>
+                            <p>Connection works! Found ${data.data ? data.data.length : 0} entries.</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    } catch (e) {
+                        resultDiv.innerHTML = `
+                            <h3 style="color: orange;">Response received but not JSON</h3>
+                            <p>Response:</p>
+                            <pre>${text.substring(0, 1000)}</pre>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h3 style="color: red;">Fetch Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Stack:</strong></p>
+                    <pre>${error.stack}</pre>
+                    <p>This usually means:</p>
+                    <ul>
+                        <li>CORS issue (script not deployed correctly)</li>
+                        <li>Network error</li>
+                        <li>Invalid URL</li>
+                    </ul>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
+

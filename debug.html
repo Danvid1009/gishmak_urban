@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Google Apps Script</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Google Apps Script Connection Debugger</h1>
+    
+    <div class="test-section">
+        <h2>1. Test GET Request (Read)</h2>
+        <button onclick="testGet()">Test GET</button>
+        <div id="getResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test POST Request (Write)</h2>
+        <button onclick="testPost()">Test POST</button>
+        <div id="postResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Direct URL Test</h2>
+        <p>Open this URL directly in your browser:</p>
+        <pre id="directUrl"></pre>
+        <p class="info">If you see JSON, the script works. If you see HTML/error, the deployment is wrong.</p>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvxQzwYF0iF-8Ebj4lSYAspCNRjzzlbl1KaAUKgEHi3ykTMF80zWBTk6Mvka9q8As/exec';
+        
+        document.getElementById('directUrl').textContent = GOOGLE_SCRIPT_URL + '?action=read';
+        
+        async function testGet() {
+            const resultDiv = document.getElementById('getResult');
+            resultDiv.innerHTML = '<p class="info">Testing...</p>';
+            
+            try {
+                console.log('Testing GET:', GOOGLE_SCRIPT_URL + '?action=read');
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=read&t=' + Date.now(), {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    mode: 'cors'
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                console.log('Response type:', response.type);
+                
+                const text = await response.text();
+                console.log('Response text:', text);
+                
+                if (text.includes('<!DOCTYPE') || text.includes('Access Denied')) {
+                    resultDiv.innerHTML = `
+                        <h3 class="error">❌ Access Denied</h3>
+                        <p>The script is not accessible. You need to:</p>
+                        <ol>
+                            <li>Open Google Apps Script</li>
+                            <li>Deploy > Manage deployments</li>
+                            <li>Set "Who has access" to <strong>"Anyone"</strong></li>
+                            <li>Redeploy and get a new URL</li>
+                        </ol>
+                        <pre>${text.substring(0, 500)}</pre>
+                    `;
+                } else {
+                    try {
+                        const data = JSON.parse(text);
+                        resultDiv.innerHTML = `
+                            <h3 class="success">✅ Success!</h3>
+                            <p>Found ${data.data ? data.data.length : 0} entries</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    } catch (e) {
+                        resultDiv.innerHTML = `
+                            <h3 class="error">⚠️ Response received but not JSON</h3>
+                            <pre>${text.substring(0, 1000)}</pre>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h3 class="error">❌ Fetch Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>This usually means:</strong></p>
+                    <ul>
+                        <li>The script is not deployed as a Web App</li>
+                        <li>"Who has access" is not set to "Anyone"</li>
+                        <li>CORS is blocking the request</li>
+                        <li>Network/firewall issue</li>
+                    </ul>
+                    <p><strong>Stack trace:</strong></p>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+        
+        async function testPost() {
+            const resultDiv = document.getElementById('postResult');
+            resultDiv.innerHTML = '<p class="info">Testing...</p>';
+            
+            const testData = {
+                action: 'write',
+                data: {
+                    word: 'TestWord',
+                    pronunciation: 'TEST-wurd',
+                    definition: 'This is a test entry',
+                    example: 'This is a test example'
+                }
+            };
+            
+            try {
+                console.log('Testing POST:', GOOGLE_SCRIPT_URL);
+                console.log('Data:', testData);
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData),
+                    cache: 'no-cache',
+                    mode: 'cors'
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                const text = await response.text();
+                console.log('Response text:', text);
+                
+                if (text.includes('<!DOCTYPE') || text.includes('Access Denied')) {
+                    resultDiv.innerHTML = `
+                        <h3 class="error">❌ Access Denied</h3>
+                        <p>Same issue as GET - deployment permissions are wrong.</p>
+                        <pre>${text.substring(0, 500)}</pre>
+                    `;
+                } else {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.success) {
+                            resultDiv.innerHTML = `
+                                <h3 class="success">✅ POST Success!</h3>
+                                <p>${data.message || 'Entry submitted successfully'}</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                                <p class="info">Note: A test entry was added to your sheet. You can delete it manually.</p>
+                            `;
+                        } else {
+                            resultDiv.innerHTML = `
+                                <h3 class="error">⚠️ POST returned error</h3>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            `;
+                        }
+                    } catch (e) {
+                        resultDiv.innerHTML = `
+                            <h3 class="error">⚠️ Response received but not JSON</h3>
+                            <pre>${text.substring(0, 1000)}</pre>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h3 class="error">❌ POST Fetch Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>This is the same issue as GET - the script needs to be properly deployed.</strong></p>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
+

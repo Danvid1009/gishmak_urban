@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gishmak Dictionary</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" sizes="192x192" href="public/favicon/icon-192.png">
+</head>
+<body>
+    <div class="background-overlay"></div>
+    
+    <div class="container">
+        <header>
+            <h1>Gishmak Dictionary</h1>
+        </header>
+
+        <main>
+            <!-- Search Bar -->
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search words..." class="search-input">
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading hidden">
+                Loading dictionary...
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message hidden"></div>
+
+            <!-- Dictionary Entries -->
+            <div id="dictionaryEntries" class="dictionary-entries"></div>
+
+            <!-- Submit Button -->
+            <button id="submitBtn" class="submit-btn">Submit New Word</button>
+        </main>
+
+        <!-- Submission Modal -->
+        <div id="submitModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Submit New Word</h2>
+                    <button class="close-btn" id="closeModal">&times;</button>
+                </div>
+                <form id="submitForm">
+                    <div class="form-group">
+                        <label for="word">Word *</label>
+                        <input type="text" id="word" name="word" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pronunciation">Pronunciation</label>
+                        <input type="text" id="pronunciation" name="pronunciation" placeholder="e.g., /ɡɪʃmæk/">
+                    </div>
+                    <div class="form-group">
+                        <label for="definition">Definition *</label>
+                        <textarea id="definition" name="definition" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="example">Example</label>
+                        <textarea id="example" name="example" rows="3" placeholder="Example sentence..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" id="submitFormBtn" class="btn btn-primary">Submit</button>
+                    </div>
+                    <div id="submitStatus" class="submit-status"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
