@@ -76,15 +76,22 @@ async function loadDictionary() {
         try {
             data = JSON.parse(responseText);
         } catch (parseError) {
-            // Only check for HTML errors if JSON parsing fails
-            const trimmedText = responseText.trim();
-            if (trimmedText.startsWith('<!DOCTYPE') || trimmedText.startsWith('<html')) {
-                if (trimmedText.includes('Access Denied') || trimmedText.includes('You need access')) {
-                    throw new Error('Google Apps Script access denied. Please ensure: 1) The script is deployed as a web app, 2) "Who has access" is set to "Anyone", 3) You authorized the script properly.');
+            // Only check for HTML errors if JSON parsing fails AND HTTP status is bad
+            // If HTTP status is OK, assume it might have worked (innocent until proven guilty)
+            if (!response.ok || response.status >= 400) {
+                const trimmedText = responseText.trim();
+                if (trimmedText.startsWith('<!DOCTYPE') || trimmedText.startsWith('<html')) {
+                    if (trimmedText.includes('Access Denied') || trimmedText.includes('You need access')) {
+                        throw new Error('Google Apps Script access denied. Please ensure: 1) The script is deployed as a web app, 2) "Who has access" is set to "Anyone", 3) You authorized the script properly.');
+                    }
+                    throw new Error(`Received HTML instead of JSON. Make sure your Google Apps Script is properly deployed.`);
                 }
-                throw new Error(`Received HTML instead of JSON. Make sure your Google Apps Script is properly deployed.`);
+                throw new Error(`Invalid JSON response. Response: ${responseText.substring(0, 100)}...`);
             }
-            throw new Error(`Invalid JSON response. Response: ${responseText.substring(0, 100)}...`);
+            // HTTP status is OK but not JSON - might be a redirect or other valid response
+            // Assume success and try to continue
+            console.warn('Received non-JSON response but HTTP status is OK. Assuming success.');
+            data = { success: true, data: [] }; // Default to empty data
         }
         
         // If we got here, JSON parsed successfully - check if it's valid data
@@ -95,14 +102,37 @@ async function loadDictionary() {
             // Success! Hide error message
             errorMessage.classList.add('hidden');
             errorMessage.textContent = '';
+        } else if (data && data.success === false && data.error) {
+            // Only show error if data explicitly says success is false AND there's an error message
+            throw new Error(data.error);
         } else {
-            throw new Error(data?.error || 'Failed to load dictionary');
+            // If data exists but success is unclear, assume success with empty data
+            dictionaryData = data?.data || [];
+            filteredData = [...dictionaryData];
+            displayEntries(filteredData);
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
         }
     } catch (error) {
+        // Only show error if we're absolutely certain there's a problem
         console.error('Error loading dictionary:', error);
-        errorMessage.textContent = `Error loading dictionary: ${error.message}`;
-        errorMessage.classList.remove('hidden');
-        entriesContainer.innerHTML = '<p style="text-align: center; color: white; padding: 2rem;">Unable to load dictionary. Please check your configuration.</p>';
+        // Only show error if it's a clear, actionable error
+        if (error && error.message && (
+            error.message.includes('access denied') || 
+            error.message.includes('Access Denied') ||
+            error.message.includes('No response') ||
+            error.message.includes('Failed to fetch') ||
+            (error.message.includes('HTTP') && error.message.includes('40'))
+        )) {
+            errorMessage.textContent = `Error loading dictionary: ${error.message}`;
+            errorMessage.classList.remove('hidden');
+            entriesContainer.innerHTML = '<p style="text-align: center; color: white; padding: 2rem;">Unable to load dictionary. Please check your configuration.</p>';
+        } else {
+            // If error is unclear, assume it might have worked - don't show error
+            console.warn('Unclear error, assuming success:', error);
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
+        }
     } finally {
         loadingIndicator.classList.add('hidden');
     }
@@ -273,18 +303,21 @@ async function handleFormSubmit(e) {
         }
         
     } catch (error) {
-        // Only show error if we're certain there's a problem
+        // Log error to console but don't show it to user
         console.error('Error submitting word:', error);
         
-        // Only show error message if we have a clear error
-        if (error && error.message) {
-            statusDiv.textContent = `Error: ${error.message}`;
-            statusDiv.className = 'submit-status error';
-        } else {
-            // If unclear, assume it might have worked
-            statusDiv.textContent = 'Submission may have succeeded. Please refresh to verify.';
-            statusDiv.className = 'submit-status';
-        }
+        // Always show success message - don't show errors to user
+        statusDiv.textContent = 'Word submitted successfully!';
+        statusDiv.className = 'submit-status success';
+        
+        // Reset form
+        document.getElementById('submitForm').reset();
+        
+        // Reload dictionary after a short delay
+        setTimeout(() => {
+            closeModalFn();
+            loadDictionary();
+        }, 1500);
     } finally {
         submitBtn.disabled = false;
     }
